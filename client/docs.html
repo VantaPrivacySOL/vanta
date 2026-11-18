@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VANTA · Docs</title>
+<meta name="description" content="How VANTA works: private swaps over NEAR Intents, the shielded SOL pool, the private launchpad, fees, and exactly what a chain can and cannot see.">
+<meta property="og:title" content="VANTA · Docs"><meta property="og:image" content="{{SITE_URL}}/og.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/vanta.css">
+<style>
+.doc{display:grid;grid-template-columns:200px minmax(0,720px);gap:70px;margin-top:40px;align-items:start}
+.doc aside{position:sticky;top:90px;display:flex;flex-direction:column;gap:9px}.doc aside a:hover{color:var(--ink)}
+.doc section{padding:0 0 54px;margin-bottom:54px;border-bottom:1px solid var(--line)}.doc section:last-child{border:0}
+.doc h2{font:800 clamp(34px,4.4vw,58px)/.9 var(--disp);font-variation-settings:'wdth' 78;letter-spacing:-.03em;text-transform:uppercase;margin-bottom:22px}
+.doc h3{font:700 19px/1.2 var(--disp);margin:28px 0 8px}
+.doc p,.doc li{font-size:16px;line-height:1.62;color:#cfcfcf}.doc p+p{margin-top:12px}.doc ol,.doc ul{padding-left:20px;margin-top:8px}.doc li{margin-top:6px}
+.doc code{font:400 13px var(--mono);background:var(--wall2);padding:2px 5px;border-radius:2px}
+.doc table.led{margin-top:14px}.doc table.led td{font-size:12.5px;line-height:1.55}
+.doc pre{background:var(--black);border:1px solid var(--online);color:var(--on);padding:18px;border-radius:14px;font:400 12.5px/1.7 var(--mono);overflow:auto;margin-top:14px}
+@media(max-width:820px){.doc{grid-template-columns:1fr;gap:26px}.doc aside{position:static;flex-direction:row;flex-wrap:wrap;gap:8px 16px}}
+</style>
+</head>
+<body>
+<main class="app wrap">
+  <p class="plq">Docs</p>
+  <h1>How it <span class="serif">works.</span></h1>
+  <div class="doc">
+    <aside class="plq"><a href="#what">What VANTA is</a><a href="#swap">Swap</a><a href="#pool">Pool</a><a href="#launch">Launchpad</a><a href="#fees">Fees</a><a href="#seen">What a chain sees</a><a href="#token">$VANTA</a><a href="#faq">Questions</a></aside>
+    <div>
+      <section id="what">
+        <h2>What VANTA is</h2>
+        <p>VANTA is three tools that share one idea: the path between where money starts and where it ends up should not be readable by strangers.</p>
+        <ul><li><b>Swap</b> moves an asset on one chain to an asset on another without connecting a wallet, and without a transaction that joins the two addresses.</li><li><b>Pool</b> holds SOL as a shielded balance that you can send to other accounts and withdraw to any wallet.</li><li><b>Launchpad</b> lets tokens launch and trade from those shielded balances, so the deployer and the buyers are never wallets anyone can look up.</li></ul>
+        <p>Each one runs today. This page says precisely what each does, what it costs, and what remains visible.</p>
+      </section>
+
+      <section id="swap">
+        <h2>Swap</h2>
+        <p>The swap is a terminal on NEAR Intents, the settlement network that connects more than thirty chains. VANTA prepares the order and tracks it. The route's market makers deliver the funds.</p>
+        <h3>The four steps</h3>
+        <ol><li><b>Quote.</b> Pick what you send and what you receive. The price is live and includes every fee.</li><li><b>Addresses.</b> Give the address that receives, and an address on the sending chain for refunds.</li><li><b>Deposit.</b> You get a one-time deposit address. Send the exact amount to it from any wallet or exchange. VANTA never asks you to connect or sign.</li><li><b>Track.</b> The page follows the order to delivery. The deposit address is the receipt: paste it into Track a transfer from any device.</li></ol>
+        <h3>Why the two ends do not touch</h3>
+        <p>Your deposit goes to an address created for that one order. The recipient is paid on the destination chain by the route's own liquidity. There is no bridge transaction carrying your funds from A to B, so there is no transaction that contains both of your addresses.</p>
+        <h3>Confidential handling</h3>
+        <p>NEAR Intents offers a confidential mode in which the order itself is processed off the public record. When the route shown under the amounts reads <code>Confidential · NEAR Intents</code>, your order is using it.</p>
+        <h3>Refunds</h3>
+        <p>If the route cannot fill the order, or the deposit arrives after the quote expires, the deposit is returned to your refund address by the route, minus the network fee of the sending chain. Sending less than the quoted amount pauses the order until the rest arrives or the deadline passes.</p>
+        <h3>Assets</h3>
+        <p>Every asset NEAR Intents can route appears in the picker, grouped by chain: Solana, Bitcoin, Ethereum, Zcash, NEAR, Base, Arbitrum, BNB Chain and the rest. A pair is available when it returns a live quote.</p>
+      </section>
+
+      <section id="pool">
+        <h2>Pool</h2>
+        <p>The pool turns public SOL into a balance that is not on a chain.</p>
+        <h3>Your account</h3>
+        <p>An account is an ed25519 key generated in your browser. Its public half is your address, which starts with <code>vn_</code>. Every request you make is signed with the private half, and the node checks that signature before doing anything. The key is never sent anywhere. The recovery key shown in the pool page is the entire account: save it, and you can restore the balance on any device.</p>
+        <h3>Deposit</h3>
+        <p>You ask for a deposit and receive an exact amount, a few random lamports above what you typed. You send that exact amount to the pool address from any Solana wallet, then give the transaction signature. The node reads the transaction from Solana, checks that it paid the pool that exact amount, and credits your account. Phantom users can do it with one button. Each transaction credits once, and only the account that asked for that amount can claim it.</p>
+        <h3>Send</h3>
+        <p>A send moves balance from one account to another inside the pool. It is instant, has no fee, and writes nothing to Solana. Nobody outside the two accounts learns that it happened.</p>
+        <h3>Withdraw</h3>
+        <p>You name any Solana address and an amount. The withdrawal leaves the pool after a wait: <b>Quiet</b> picks a random delay between 5 and 30 minutes, <b>Fast</b> leaves in under two. The delay exists so that a withdrawal cannot be matched to a deposit by the clock.</p>
+        <h3>Who holds the SOL</h3>
+        <p>Deposited SOL sits in the pool's Solana account, whose address is shown on every deposit. The node keeps the ledger of shielded balances and pays withdrawals from that account. Only a request signed by your key can move your balance.</p>
+        <h3>Limits</h3>
+        <table class="led"><tr><th>Rule</th><th>Value</th></tr><tr><td>Deposit</td><td>0.01 to 100 SOL each</td></tr><tr><td>Smallest send</td><td>0.0001 SOL</td></tr><tr><td>Smallest withdrawal</td><td>0.005 SOL</td></tr><tr><td>Deposit request lifetime</td><td>30 minutes</td></tr></table>
+      </section>
+
+      <section id="launch">
+        <h2>Launchpad</h2>
+        <p>The launchpad lives inside the pool. Launching, buying and selling all move shielded balance, so none of it is a wallet transaction.</p>
+        <h3>Launching</h3>
+        <p>A launch needs a name, a ticker, and 0.02 SOL of shielded balance. The token has a fixed supply of 1,000,000,000 and is sold along a constant-product curve that starts with 30 virtual SOL against 1,073,000,000 virtual tokens. There is no team allocation and no presale: every token in circulation was bought from the curve.</p>
+        <pre>tokens out = T − (S × T) ÷ (S + sol in)
+price      = S ÷ T
+S, T       = the curve's SOL and token reserves</pre>
+        <h3>The sealed opening</h3>
+        <p>A creator can open the token sealed for 1, 5 or 15 minutes. During the window anyone may place an order, up to 2 SOL an account. The price does not move, and nobody sees anything except how many orders are in and how much SOL is committed. When the clock ends, all of it is filled as a single buy and every participant receives tokens at the same price, in proportion to what they put in. Selling opens at that moment.</p>
+        <p>This removes the reason to snipe. Arriving in the first millisecond buys nothing that arriving in the last second does not.</p>
+        <h3>Trading</h3>
+        <p>After the opening, buys and sells fill against the curve at once. Each order has a slippage limit of 3% set by the page. The tape shows the side, the SOL and the tokens of each trade. It never shows an account.</p>
+        <h3>What a creator earns</h3>
+        <p>Half of the 1% fee on every trade of a token is credited to its creator's shielded balance as it happens. The amount is visible only to the creator.</p>
+        <h3>Holdings</h3>
+        <p>The page shows how many accounts hold a token. It does not show which accounts, or how much each holds. Your own holdings appear in your pool activity.</p>
+      </section>
+
+      <section id="fees">
+        <h2>Fees</h2>
+        <table class="led"><tr><th>Action</th><th>Fee</th></tr><tr><td>Swap</td><td>The route's fee, included in every quote before you send</td></tr><tr><td>Shield (deposit)</td><td>0.5%</td></tr><tr><td>Private send</td><td>None</td></tr><tr><td>Unshield (withdraw)</td><td>0.5%, plus Solana's 0.000005 SOL network fee</td></tr><tr><td>Launch a token</td><td>0.02 SOL</td></tr><tr><td>Trade on the launchpad</td><td>1%: half to the token's creator, half to the protocol</td></tr></table>
+        <p style="margin-top:14px">Running totals of every fee line are on the home page, read live from the node.</p>
+      </section>
+
+      <section id="seen">
+        <h2>What a chain sees</h2>
+        <table class="led"><tr><th style="width:18%">&nbsp;</th><th style="width:41%">Public</th><th>Not on any chain</th></tr>
+          <tr><td><b>Swap</b></td><td>Your deposit to the one-time address, and the delivery to the recipient.</td><td>A transaction linking the two. A wallet connection. An account with VANTA.</td></tr>
+          <tr><td><b>Pool</b></td><td>SOL entering the pool from your wallet. SOL leaving the pool to the address you named.</td><td>Your balance. Sends between accounts. Which deposit a withdrawal came from.</td></tr>
+          <tr><td><b>Launchpad</b></td><td>The token's name, price, volume and number of holders.</td><td>The creator. The buyers. Individual holdings. Creator earnings.</td></tr></table>
+        <h3>Using it well</h3>
+        <ul><li>Withdraw to a wallet that has never transacted with the wallet you deposited from.</li><li>Withdraw a different amount from the one you deposited, or in more than one piece.</li><li>Prefer the Quiet withdrawal. The more activity crosses the pool between your deposit and your withdrawal, the less there is to match.</li><li>On a swap, the amount and the minute are still visible at both ends. Round amounts and busy hours blend in best.</li></ul>
+      </section>
+
+      <section id="token">
+        <h2>$VANTA</h2>
+        <p>$VANTA is the token of the protocol, on Solana. Its contract address is published in the box on the home page before it is published anywhere else. An address that is not in that box is not $VANTA.</p>
+        <h3>Protocol revenue</h3>
+        <p>The protocol earns from four lines, all of them counted live on the home page: the 0.5% shield fee, the 0.5% unshield fee, the 0.02 SOL launch fee, and the protocol's half of the 1% launchpad trading fee.</p>
+      </section>
+
+      <section id="faq">
+        <h2>Questions</h2>
+        <h3>Do I need to connect a wallet?</h3><p>Not for a swap. You send to a deposit address from wherever your funds are. In the pool, your account is a key made in the browser. Phantom is offered as a convenience for paying a deposit and is never required.</p>
+        <h3>What if I close the page during a swap?</h3><p>Nothing is lost. The order lives with the route, not in your tab. Open the swap page and paste the deposit address into Track a transfer. Swaps started in this browser are also listed on that page.</p>
+        <h3>What if I lose my recovery key?</h3><p>The balance cannot be reached. The key exists only where you saved it. Copy it the moment you create an account.</p>
+        <h3>Can two people share an account?</h3><p>Anyone with the recovery key controls the balance. Give each person their own account and send between them. Sends are free.</p>
+        <h3>Why is my deposit amount slightly more than I typed?</h3><p>The extra lamports, less than 0.0001 SOL, identify the deposit as yours without attaching your wallet to your account. They are credited to your balance with the rest.</p>
+        <h3>Can I launch a token without depositing?</h3><p>You need 0.02 SOL of shielded balance. It can come from your own deposit or from a send by someone already in the pool.</p>
+        <h3>Who can see what I hold on the launchpad?</h3><p>You. Positions are returned only to a request signed by your key.</p>
+        <h3>Does a sealed order ever get refused?</h3><p>Only if it would take your account past 2 SOL in that window, or past your balance. Once placed, it fills when the clock ends.</p>
+        <h3>How long does a swap take?</h3><p>Most routes deliver in under a minute after the deposit confirms on its chain. Bitcoin, Zcash and other slower chains take as long as their confirmations take. The quote shows the estimate.</p>
+      </section>
+    </div>
+  </div>
+</main>
+<script type="module">import { chrome } from '/common.js'; chrome('/docs');</script>
+</body>
+</html>

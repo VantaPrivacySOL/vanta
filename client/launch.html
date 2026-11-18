@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VANTA · Launch</title>
+<meta name="description" content="The private launchpad. Tokens launch and trade from shielded balances: no deployer wallet, no buyer list, and a sealed opening where every order pays one price.">
+<meta property="og:title" content="VANTA · The private launchpad"><meta property="og:image" content="{{SITE_URL}}/og.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/vanta.css">
+<style>
+.bar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:34px 0 18px}
+.sort{display:flex;gap:6px}.sort button{font:400 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line);padding:8px 11px;border-radius:9px;color:var(--mute)}.sort button.on{background:rgba(255,255,255,0.076);color:var(--on);border-color:var(--vio)}
+.works a{display:grid;grid-template-columns:56px minmax(0,2.4fr) repeat(4,minmax(0,1fr));gap:18px;align-items:center;padding:14px 0;border-bottom:1px solid var(--hair);transition:padding .2s,background .2s}
+.works a:hover{background:rgba(255,255,255,0.034);padding-left:10px;padding-right:10px;border-radius:12px}
+.works .th{display:grid;grid-template-columns:56px minmax(0,2.4fr) repeat(4,minmax(0,1fr));gap:18px;padding:0 0 8px;border-bottom:1px solid var(--line)}
+.works .nm{font:700 22px/1.1 var(--disp);font-variation-settings:'wdth' 82;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.works .nm small{font:400 11px var(--mono);color:var(--mute);margin-left:6px}
+.works .v{font:400 13px var(--mono)}
+.thumb{width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#000 52%,#ffffff 56%,#3a3a3a 72%) center/cover;display:block;flex:none;box-shadow:0 0 18px -4px rgba(255,255,255,0.336)}
+@media(max-width:760px){.works a,.works .th{grid-template-columns:44px minmax(0,1fr) auto}.works .x{display:none}.thumb{width:44px;height:44px}}
+.tk h1{font-size:clamp(44px,7.4vw,104px)}
+#chart{width:100%;height:260px;display:block;margin:26px 0 8px}
+.seal{font:800 64px/1 var(--disp);font-variation-settings:'wdth' 78;letter-spacing:-.03em}
+</style>
+</head>
+<body>
+<main class="app wrap" id="main"></main>
+
+<script type="module">
+import { chrome, $, get, signed, account, gate, sol, num, compact, esc, ago, toast, LAMPORTS } from '/common.js';
+chrome('/launch');
+const id = location.pathname.startsWith('/t/') ? location.pathname.slice(3) : '';
+let cfg = { rules: { sealed: [0, 60, 300, 900], launchFee: 0.02, sealedCap: 2 } }, usd = 0, me = null;
+const img = (l, cls = 'thumb') => `<i class="${cls}" style="${l.image ? `background-image:url(${l.image})` : ''}"></i>`;
+const cap = (l) => (usd ? '$' + compact(l.mcap * usd) : num(l.mcap, 1) + ' SOL');
+const left = (t) => { const s = Math.max(0, Math.ceil((t - Date.now()) / 1000)); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const mine = async () => { if (!(await account())) return (me = null); try { me = await signed('/api/pool/me'); } catch { me = null; } return me; };
+
+// ---- the wall of launches ----
+async function wall() {
+  let sort = 'new';
+  $('main').innerHTML = `<p class="plq">03 / Launch</p><h1>Launch <span class="serif">unseen.</span></h1>
+    <div class="bar"><p class="plq" style="max-width:520px"><b>The private launchpad.</b> Every token here is launched and traded from shielded balances. No deployer wallet. No buyer list. Sealed openings clear at one price.</p><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="sort"><button data-s="new" class="on">New</button><button data-s="cap">Market cap</button><button data-s="volume">Volume</button></div><button class="btn ink" id="mk">Launch a token →</button></div></div>
+    <div class="works" id="list"></div>`;
+  const draw = async () => { const l = await get('/api/launches?sort=' + sort);
+    $('list').innerHTML = l.length ? `<div class="th plq"><span></span><span>Work</span><span>Market cap</span><span class="x">Volume</span><span class="x">Holders</span><span class="x">Age</span></div>` + l.map((x) => `<a href="/t/${x.id}">${img(x)}<span class="nm">${esc(x.name)}<small>$${esc(x.symbol)}</small></span><span class="v">${x.sealed ? `<span class="dot"></span>Sealed ${left(x.sealed.until)}` : cap(x)}</span><span class="v x">${num(x.volume, 2)} SOL</span><span class="v x">${x.holders}</span><span class="v x mute">${ago(x.created)}</span></a>`).join('') : '<p class="plq" style="padding:40px 0;border-top:1px solid var(--line)">The wall is empty. The first launch hangs here.</p>'; };
+  document.querySelectorAll('[data-s]').forEach((b) => { b.onclick = () => { sort = b.dataset.s; document.querySelectorAll('[data-s]').forEach((x) => x.classList.toggle('on', x === b)); draw(); }; });
+  $('mk').onclick = make; draw(); setInterval(draw, 5000);
+}
+function shrink(file) { return new Promise((ok, no) => { const i = new Image(); i.onload = () => { const c = document.createElement('canvas'), s = Math.min(1, 320 / Math.min(i.width, i.height)), w = Math.round(i.width * s), h = Math.round(i.height * s), d = Math.min(w, h); c.width = c.height = d; c.getContext('2d').drawImage(i, (d - w) / 2, (d - h) / 2, w, h); ok(c.toDataURL('image/jpeg', 0.82)); }; i.onerror = () => no(new Error('That file is not an image')); i.src = URL.createObjectURL(file); }); }
+async function make() {
+  const v = document.createElement('div'); v.className = 'veil'; v.innerHTML = '<div class="slab" style="overflow:auto"></div>'; document.body.append(v); v.onclick = (e) => { if (e.target === v) v.remove(); };
+  const s = v.firstChild, form = () => {
+    let sealed = 60, image = '';
+    s.innerHTML = `<p class="lbl">Launch a token</p><p style="font:600 24px/1.15 var(--disp);margin:8px 0 14px">Nobody will know it was you.</p>
+      <p class="lbl">Name</p><input id="lN" maxlength="32" autocomplete="off"><p class="lbl" style="margin-top:14px">Ticker</p><input id="lS" maxlength="10" autocomplete="off" style="text-transform:uppercase"><p class="lbl" style="margin-top:14px">About</p><input id="lA" maxlength="280" autocomplete="off"><p class="lbl" style="margin-top:14px">Image</p><input id="lI" type="file" accept="image/*" style="font-size:12px">
+      <p class="lbl" style="margin-top:16px">Opening</p><div class="chips" id="lW">${cfg.rules.sealed.map((x) => `<button data-w="${x}" class="${x === sealed ? 'on' : ''}">${x ? 'Sealed ' + x / 60 + ' min' : 'Open at once'}</button>`).join('')}</div>
+      <p class="lbl" style="margin-top:10px;text-transform:none;letter-spacing:0;font-size:12px;line-height:1.7">In a sealed opening orders are collected with the price hidden, capped at ${cfg.rules.sealedCap} SOL an account, then filled together at one price. Nobody can be first.</p>
+      <div class="row" style="margin-top:12px"><span>Cost</span><span>${cfg.rules.launchFee} SOL, from your shielded balance</span></div><div class="row"><span>You earn</span><span>half of every 1% trading fee</span></div>
+      <button class="btn on" id="lGo" style="margin-top:14px">Launch</button><p class="err" id="lE"></p>`;
+    s.querySelectorAll('[data-w]').forEach((b) => { b.onclick = () => { sealed = Number(b.dataset.w); s.querySelectorAll('[data-w]').forEach((x) => x.classList.toggle('on', x === b)); }; });
+    s.querySelector('#lI').onchange = async (e) => { try { image = e.target.files[0] ? await shrink(e.target.files[0]) : ''; } catch (x) { s.querySelector('#lE').textContent = x.message; } };
+    s.querySelector('#lGo').onclick = async () => { const b = s.querySelector('#lGo'); b.disabled = true; s.querySelector('#lE').textContent = ''; try { const l = await signed('/api/launch/create', { name: s.querySelector('#lN').value, symbol: s.querySelector('#lS').value, about: s.querySelector('#lA').value, image, sealed }); location.href = '/t/' + l.id; } catch (x) { s.querySelector('#lE').innerHTML = esc(x.message) + (/shielded balance/.test(x.message) ? ' · <a href="/pool" style="text-decoration:underline">Deposit</a>' : ''); b.disabled = false; } };
+  };
+  if (await account()) form(); else gate(s, form);
+}
+
+// ---- one token ----
+async function token() {
+  let l = await get('/api/launch/' + id).catch(() => null);
+  if (!l) { $('main').innerHTML = '<p class="plq">404</p><h1>Nothing <span class="serif">here.</span></h1><p style="margin-top:30px"><a class="btn ink" href="/launch">Back to the wall →</a></p>'; return; }
+  document.title = `VANTA · $${l.symbol}`; let side = 'buy', wasSealed = !!l.sealed;
+  $('main').className = 'app wrap tk';
+  $('main').innerHTML = `<p class="plq"><a href="/launch">← The wall</a></p>
+    <div class="stage" style="margin-top:14px"><div>
+      <div style="display:flex;gap:20px;align-items:center">${img(l)}<div style="min-width:0"><h1 style="overflow-wrap:anywhere">${esc(l.name)}</h1></div></div>
+      <p class="plq" style="margin-top:14px"><b>$${esc(l.symbol)}</b> · launched ${ago(l.created)} ago by an account nobody can name${l.about ? '<br><span style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)">' + esc(l.about) + '</span>' : ''}</p>
+      <canvas id="chart"></canvas>
+      <div class="figs" id="figs"></div>
+      <div style="margin-top:34px"><p class="plq" style="margin-bottom:6px"><b>Tape</b> · amounts only, never accounts</p><table class="led" id="tape"></table></div>
+    </div><div class="slab" id="box"></div></div>`;
+  const chart = () => { const c = $('chart'), d = Math.min(devicePixelRatio || 1, 2), w = c.width = c.clientWidth * d, h = c.height = c.clientHeight * d, x = c.getContext('2d'), p = l.points.length > 1 ? l.points : [[l.created, l.price], [Date.now(), l.price]]; const lo = Math.min(...p.map((q) => q[1])), hi = Math.max(...p.map((q) => q[1])), span = hi - lo || hi * .1 || 1, t0 = p[0][0], t1 = Math.max(p.at(-1)[0], t0 + 1);
+    x.clearRect(0, 0, w, h); x.strokeStyle = 'rgba(255,255,255,.18)'; x.lineWidth = d; x.beginPath(); x.moveTo(0, h - d); x.lineTo(w, h - d); x.stroke(); const X = (t) => ((t - t0) / (t1 - t0)) * (w - 8 * d) + 4 * d, Y = (v) => h - 14 * d - ((v - lo) / span) * (h - 30 * d);
+    x.beginPath(); p.forEach((q, i) => { const px = X(q[0]), py = Y(q[1]); if (!i) x.moveTo(px, py); else { x.lineTo(px, Y(p[i - 1][1])); x.lineTo(px, py); } }); x.strokeStyle = '#d6d6d6'; x.lineWidth = 2.2 * d; x.lineJoin = 'round'; x.stroke(); x.lineTo(X(p.at(-1)[0]), h); x.lineTo(X(t0), h); x.closePath(); x.fillStyle = 'rgba(255,255,255,0.05)'; x.fill(); const e = p.at(-1); x.beginPath(); x.arc(X(e[0]), Y(e[1]), 5 * d, 0, 7); x.fillStyle = '#fff'; x.fill(); };
+  const facts = () => { $('figs').innerHTML = [[cap(l), 'Market cap'], [num(l.raised, 3), 'SOL on the curve'], [num(l.volume, 2), 'SOL volume'], [l.holders, 'Holders'], [l.trades, 'Trades']].map(([a, b]) => `<div class="fig"><b>${a}</b><span class="plq">${b}</span></div>`).join('');
+    $('tape').innerHTML = l.tape.length ? l.tape.slice(0, 14).map((t) => `<tr><td>${t.side === 'open' ? 'Sealed opening' : t.side === 'buy' ? 'Buy' : 'Sell'}</td><td>${sol(t.lamports, 4)} SOL</td><td>${compact(t.tokens / 1e6)} ${esc(l.symbol)}</td><td class="mute" style="text-align:right">${ago(t.t)} ago</td></tr>`).join('') : '<tr><td class="mute">No trades yet.</td></tr>'; chart(); };
+  const pos = () => me?.positions.find((p) => p.id === id), held = () => me?.sealed.find((p) => p.id === id);
+  const box = () => {
+    const b = $('box'), bal = me ? `<div class="row"><span>Shielded balance</span><span>${sol(me.balance)} SOL${me.balance < 0.002 * LAMPORTS ? ' · <a href="/pool" style="text-decoration:underline">deposit</a>' : ''}</span></div>` : '';
+    if (l.sealed) { b.innerHTML = `<p class="lbl"><span class="dot"></span>Sealed opening</p><p class="seal" id="cd" style="margin:10px 0 6px">${left(l.sealed.until)}</p><p class="lbl" style="text-transform:none;letter-spacing:0;font-size:12px;line-height:1.7">Orders are collected now and filled together at one price when the clock ends. ${cfg.rules.sealedCap} SOL an account.</p><hr><div class="row"><span>Orders in</span><span id="so">${l.sealed.orders}</span></div><div class="row"><span>Committed</span><span id="sc">${num(l.sealed.committed, 3)} SOL</span></div>${held() ? `<div class="row"><span>Your order</span><span>${sol(held().lamports)} SOL</span></div>` : ''}<hr>` + (me ? `<p class="lbl">Add to the opening</p><input class="big" id="amt" inputmode="decimal" placeholder="0.0" autocomplete="off" style="margin-top:6px">${bal}<button class="btn on" id="go" style="margin-top:14px">Place sealed order</button><p class="err" id="err"></p>` : '<div id="g"></div>'); }
+    else { const p = pos(); b.innerHTML = `<div class="tabs"><button data-d="buy" class="${side === 'buy' ? 'on' : ''}">Buy</button><button data-d="sell" class="${side === 'sell' ? 'on' : ''}">Sell</button></div>` + (me ? `<p class="lbl">${side === 'buy' ? 'You pay · SOL' : 'You sell · ' + esc(l.symbol)}</p><input class="big" id="amt" inputmode="decimal" placeholder="0.0" autocomplete="off" style="margin-top:6px"><div class="chips">${(side === 'buy' ? [0.1, 0.5, 1] : [25, 50, 100]).map((x) => `<button data-q="${x}">${side === 'buy' ? x + ' SOL' : x + '%'}</button>`).join('')}</div><div class="row" style="margin-top:14px"><span>You receive</span><span id="pv">·</span></div>${bal}<div class="row"><span>You hold</span><span>${p ? compact(p.tokens / 1e6) + ' · worth ' + sol(p.value) + ' SOL' : '0'}</span></div><button class="btn on" id="go" style="margin-top:14px">${side === 'buy' ? 'Buy' : 'Sell'}</button><p class="err" id="err"></p><p class="lbl" style="margin-top:6px;text-transform:none;letter-spacing:0;font-size:12px;line-height:1.7">1% fee. Your order shows on the tape as an amount. Your account does not show anywhere.</p>` : '<div id="g"></div>'); }
+    if ($('g')) gate($('g'), async () => { await mine(); box(); });
+    b.querySelectorAll('[data-d]').forEach((x) => { x.onclick = () => { side = x.dataset.d; box(); }; });
+    const amt = $('amt'); if (!amt) return; let pvT, out = 0;
+    const units = () => (l.sealed || side === 'buy' ? Math.round(Number(amt.value) * LAMPORTS) : Math.floor(Number(amt.value) * 1e6));
+    const preview = () => { clearTimeout(pvT); if (l.sealed || !$('pv')) return; const n = units(); if (!(n > 0)) { $('pv').textContent = '·'; return; } pvT = setTimeout(async () => { try { const r = await get(`/api/launch/preview?id=${id}&side=${side}&amount=${n}`); out = r.out; $('pv').textContent = side === 'buy' ? compact(r.out / 1e6) + ' ' + l.symbol : sol(r.out, 5) + ' SOL'; } catch (e) { $('pv').textContent = '·'; } }, 200); };
+    amt.oninput = preview; b.querySelectorAll('[data-q]').forEach((x) => { x.onclick = () => { amt.value = side === 'buy' ? x.dataset.q : (((pos()?.tokens || 0) * Number(x.dataset.q)) / 100 / 1e6).toFixed(6); preview(); }; });
+    $('go').onclick = async () => { const g = $('go'); g.disabled = true; $('err').textContent = ''; try { const n = units();
+      if (l.sealed) { await signed('/api/launch/buy', { id, lamports: n }); toast('Sealed. It fills when the clock ends.'); }
+      else if (side === 'buy') { const r = await signed('/api/launch/buy', { id, lamports: n, min: Math.floor(out * 0.97) }); toast(`Bought ${compact(r.tokens / 1e6)} ${l.symbol}`); }
+      else { const r = await signed('/api/launch/sell', { id, tokens: n, min: Math.floor(out * 0.97) }); toast(`Sold for ${sol(r.lamports, 5)} SOL`); }
+      await Promise.all([mine(), get('/api/launch/' + id).then((x) => { l = x; })]); facts(); box();
+    } catch (e) { $('err').textContent = e.message; g.disabled = false; } };
+  };
+  await mine(); facts(); box(); addEventListener('resize', chart);
+  setInterval(async () => { try { const x = await get('/api/launch/' + id); l = x; facts(); if (wasSealed && !l.sealed) { wasSealed = false; await mine(); box(); toast('The opening cleared.'); } else if (l.sealed && $('so')) { $('so').textContent = l.sealed.orders; $('sc').textContent = num(l.sealed.committed, 3) + ' SOL'; } } catch { /* keep the last view */ } }, 3000);
+  setInterval(() => { if (l.sealed && $('cd')) $('cd').textContent = left(l.sealed.until); }, 500);
+}
+cfg = await get('/api/config').catch(() => cfg); get('/api/stats').then((s) => { usd = s.solUsd; }).catch(() => {});
+if (id) token(); else wall();
+</script>
+</body>
+</html>

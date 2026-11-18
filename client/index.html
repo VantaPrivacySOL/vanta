@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VANTA | Private swaps, shielded balances, private launches</title>
+<meta name="description" content="Private swaps across 30+ chains with no wallet connection, shielded SOL balances, and a launchpad where nobody can see who launched or who bought.">
+<meta property="og:title" content="VANTA · Nothing reflects"><meta property="og:description" content="Private swaps, shielded balances and a private launchpad on Solana."><meta property="og:image" content="{{SITE_URL}}/og.png"><meta property="og:url" content="{{SITE_URL}}"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/vanta.css">
+<style>
+.hero{position:relative;height:100svh;min-height:640px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;text-align:center;padding:0 16px 34px}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hero h1{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.hero>*:not(canvas){position:relative}
+.hero .sub{font:600 clamp(20px,2.6vw,30px)/1.2 var(--disp);background:linear-gradient(90deg,#9a9a9a,#fff 60%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lead{color:var(--mute);margin-top:10px;font-size:15px}
+.hero .go{display:flex;gap:12px;justify-content:center;margin-top:22px;flex-wrap:wrap}.hero .go .btn{padding:16px 26px}
+.pts{display:flex;gap:14px 44px;justify-content:center;margin-top:30px;flex-wrap:wrap}.pts div{display:flex;gap:12px;align-items:center;text-align:left;font:600 13px/1.35 var(--disp)}
+.pts svg{width:26px;height:26px;stroke:var(--sig);fill:none;stroke-width:1.5;flex:none}
+@media(max-width:640px){.pts{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}.hero .lead{display:none}}
+.strip{display:flex;gap:10px 34px;justify-content:center;flex-wrap:wrap;padding:18px 16px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}.strip a{font:400 11px var(--mono);letter-spacing:.06em;color:var(--mute)}.strip a:hover{color:var(--on)}.strip a:after{content:' ↘'}
+.sec{padding:110px 0 0;text-align:center}.sec .eye{font:500 11px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--sig)}
+.sec h2{font:800 clamp(40px,6vw,84px)/.92 var(--disp);font-variation-settings:'wdth' 82;letter-spacing:-.035em;margin-top:14px}.sec h2 em{font-family:var(--serif);font-weight:400;letter-spacing:-.01em;color:#cfcfcf}
+.sec .lead{color:var(--mute);max-width:560px;margin:16px auto 0}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:46px;text-align:left}
+@media(max-width:980px){.cards{grid-template-columns:1fr}}
+.card{display:flex;flex-direction:column;gap:14px;min-height:400px;transition:transform .25s,border-color .25s}.card:hover{transform:translateY(-4px);border-color:var(--vio)}
+.card .k{display:flex;justify-content:space-between;align-items:center;font:500 10px var(--mono);letter-spacing:.14em;color:var(--onmute)}
+.tag{font:500 10px var(--mono);letter-spacing:.12em;padding:4px 8px;border-radius:99px;border:1px solid var(--vio);color:#cfcfcf;background:rgba(255,255,255,0.05)}
+.card h3{font:800 34px/1 var(--disp);font-variation-settings:'wdth' 84;letter-spacing:-.02em}.card p{color:var(--mute);font-size:14.5px;line-height:1.55}
+.card .live{margin-top:auto;border-top:1px solid var(--online);padding-top:14px}
+.q b{font:700 30px/1 var(--disp);letter-spacing:-.02em;display:block}
+.mini a{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--online);font:600 14px var(--disp)}.mini a small{font:400 11px var(--mono);color:var(--onmute)}
+.data{margin-top:46px;text-align:left;padding:34px}.data .figs{grid-template-columns:repeat(4,minmax(0,1fr))}@media(max-width:760px){.data .figs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.data .fig b{font-size:clamp(30px,4vw,50px);background:linear-gradient(180deg,#fff,#8f8f8f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tokbox{max-width:680px;margin:40px auto 0;text-align:left}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:46px;text-align:left}@media(max-width:980px){.how{grid-template-columns:1fr}}
+.how .slab h3{font:800 26px/1.05 var(--disp);margin:10px 0 8px}.how .slab p{color:var(--mute);font-size:14.5px}.how .slab .tag{display:inline-block;margin-top:16px;border-color:var(--online);color:var(--onmute);background:none}
+.route{display:flex;align-items:center;justify-content:center;gap:14px;margin:38px auto 0;flex-wrap:wrap}.route div{padding:14px 18px;border:1px solid var(--online);border-radius:14px;background:var(--black);text-align:left;font:700 16px var(--disp)}.route div small{display:block;font:400 10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--onmute);margin-bottom:4px}
+.route .mid{border-color:var(--vio);box-shadow:0 0 40px -8px rgba(255,255,255,0.336)}.route i{width:46px;border-top:1px dashed var(--vio)}
+.seen{margin-top:46px;text-align:left;padding:30px}.seen td{font-size:13px;line-height:1.55;color:#cfcfcf}
+.qs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}@media(max-width:760px){.qs{grid-template-columns:1fr}}.qs a{padding:16px 18px;border:1px solid var(--online);border-radius:14px;font:600 15px var(--disp);text-align:left;background:var(--black)}.qs a:hover{border-color:var(--vio)}.qs a:after{content:' →';color:var(--sig)}
+.fin{position:relative;padding:130px 16px 120px;text-align:center;overflow:hidden;margin-top:110px;background:radial-gradient(700px 380px at 50% 100%,rgba(255,255,255,0.147),transparent 70%)}
+.fin h3{font:800 clamp(52px,10vw,150px)/.84 var(--disp);font-variation-settings:'wdth' 78;letter-spacing:-.045em}
+.fin .go{display:flex;gap:12px;justify-content:center;margin-top:36px;flex-wrap:wrap}.fin+footer.end{margin-top:0}
+</style>
+</head>
+<body>
+<section class="hero">
+  <canvas id="gl" aria-hidden="true"></canvas>
+  <h1>VANTA. Nothing reflects. Private swaps, shielded balances and a private launchpad on Solana.</h1>
+  <p class="sub">Solana shielded balances. Private swaps.<br>The first private launchpad.</p>
+  <p class="lead">Hold SOL unseen, swap across chains in one send, or launch a token nobody can trace to you.</p>
+  <div class="go"><a class="btn ink" href="/pool">Explore the pool →</a><a class="btn line" href="/swap">Start a swap →</a><a class="btn line" href="/launch">Launch a token →</a></div>
+  <div class="pts">
+    <div><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Shielded balances<br>on Solana</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg><span>One-time swaps<br>across <b id="nCh">39</b> chains</span></div>
+    <div><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg><span>No wallet connection<br>for one-time swaps</span></div>
+    <div><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg><span>Private launches<br>sealed openings</span></div>
+  </div>
+</section>
+<nav class="strip"><a href="/pool">The pool</a><a href="/swap">VANTA · private routing</a><a href="/launch">Private launchpad</a><a href="#data">Onchain data</a><a href="/docs#token">$VANTA</a></nav>
+
+<main class="wrap">
+  <section class="sec" id="products">
+    <p class="eye">The product stack</p>
+    <h2>Your balance. Your route. <em>Your launch.</em></h2>
+    <div class="cards">
+      <a class="slab card" href="/pool"><div class="k"><span>01 / SHIELDED BALANCES</span><span class="tag">SOLANA</span></div><h3>The pool.</h3><p>Hold and send shielded SOL. Sends between accounts never touch a chain. Withdraw to any wallet after a random wait.</p>
+        <div class="live"><div class="figs" style="grid-template-columns:1fr 1fr"><div class="fig"><b id="sTvl">·</b><span class="lbl">SOL shielded</span></div><div class="fig"><b id="sAcc">·</b><span class="lbl">Accounts</span></div></div><span class="btn on" style="margin-top:16px">Explore the pool</span></div></a>
+      <div class="slab card q"><div class="k"><span>02 / PRIVATE SWAPS</span><span class="tag">LIVE</span></div><h3>Private swaps.</h3><p>Cross-chain swaps with private routing. Pick your assets, review the quote, send from your wallet, track settlement.</p>
+        <div class="live"><p class="lbl">1 SOL becomes, right now</p><b id="qOut" style="margin-top:8px">·</b><p class="lbl" id="qSub" style="margin-top:6px">&nbsp;</p><div class="chips" id="qTo"></div><a class="btn on" href="/swap" style="margin-top:16px">Start a swap</a></div></div>
+      <a class="slab card" href="/launch"><div class="k"><span>03 / PRIVATE LAUNCHPAD</span><span class="tag">NEW</span></div><h3>Private launches.</h3><p>Launch and trade tokens from shielded balances. No deployer wallet, no buyer list, and a sealed opening where every order pays one price.</p>
+        <div class="live"><div class="mini" id="lMini"><p class="lbl" style="padding:6px 0">Nothing launched yet. Be the first.</p></div><span class="btn on" style="margin-top:16px">Open the launchpad</span></div></a>
+    </div>
+  </section>
+
+  <section class="sec" id="data">
+    <p class="eye">The protocol, live</p>
+    <h2>Onchain <em>data.</em></h2>
+    <div class="slab data"><div class="figs"><div class="fig"><b id="fShield">·</b><span class="lbl">SOL · pool fees</span></div><div class="fig"><b id="fTrade">·</b><span class="lbl">SOL · launchpad fees</span></div><div class="fig"><b id="fCre">·</b><span class="lbl">SOL · paid to creators</span></div><div class="fig"><b id="fVol">·</b><span class="lbl">SOL · launchpad volume</span></div></div>
+      <hr><div class="figs"><div class="fig"><b id="sSent">·</b><span class="lbl">SOL sent privately</span></div><div class="fig"><b id="sOut">·</b><span class="lbl">SOL withdrawn</span></div><div class="fig"><b id="sDep">·</b><span class="lbl">Deposits</span></div><div class="fig"><b id="sLau">·</b><span class="lbl">Launches</span></div></div>
+      <p class="lbl" style="margin-top:22px;line-height:1.7">Read from the running node on every page load. <a href="/docs#fees" style="text-decoration:underline">Fee schedule</a></p></div>
+  </section>
+
+  <section class="sec" id="token">
+    <p class="eye">Explore the token</p>
+    <h2>Enter the <em>$VANTA.</em></h2>
+    <p class="lead">Verify the token. Make your move.</p>
+    <div class="slab tokbox" id="caBox"><p class="lbl">Solana mint</p><p style="font:700 22px/1.2 var(--disp);margin-top:10px">Posted here first, the moment it exists.</p><p class="lbl" style="margin-top:10px;text-transform:none;letter-spacing:0;font-size:12px;line-height:1.7">Any address you see anywhere else before it appears in this box is not $VANTA.</p></div>
+  </section>
+
+  <section class="sec" id="how">
+    <p class="eye">How it works</p>
+    <h2>A darker <em>route.</em></h2>
+    <p class="lead">VANTA prepares the order and shows you the exact deposit. The transfer always comes from your own wallet.</p>
+    <div class="how">
+      <div class="slab"><span class="lbl">01 / QUOTE</span><h3>Pick a route.</h3><p>Choose what you send and where it should land.</p><span class="tag">NO WALLET CONNECTION NEEDED</span></div>
+      <div class="slab"><span class="lbl">02 / REVIEW</span><h3>Check the details.</h3><p>See the estimate, the fees and the deposit address before you send.</p><span class="tag">QUOTE BEFORE COMMITMENT</span></div>
+      <div class="slab"><span class="lbl">03 / SEND</span><h3>Deposit yourself.</h3><p>Send the exact amount from your own wallet, then track the order.</p><span class="tag">YOU CONTROL THE SEND</span></div>
+    </div>
+    <div class="route"><div><small>Your wallet</small>Solana</div><i></i><div class="mid"><small>Private routing</small>VANTA</div><i></i><div><small>Your destination</small>Any chain</div></div>
+  </section>
+
+  <section class="sec" id="clarity">
+    <p class="eye">A little clarity</p>
+    <h2>Before you go <em>unseen.</em></h2>
+    <p class="lead">Know the route. Know exactly what a chain records.</p>
+    <div class="slab seen"><table class="led">
+      <tr><th style="width:18%">&nbsp;</th><th style="width:41%">Public</th><th>Not on any chain</th></tr>
+      <tr><td><b>Swap</b></td><td>Your deposit to a one-time address. A delivery to the recipient from the route's own liquidity.</td><td>Any transaction between your wallet and the recipient. A wallet connection. An account.</td></tr>
+      <tr><td><b>Pool</b></td><td>SOL entering the pool. SOL leaving it, later, to an address you choose.</td><td>Your balance. Every send between accounts. Which deposit a withdrawal belongs to.</td></tr>
+      <tr><td><b>Launch</b></td><td>The token, its price and its volume.</td><td>Who launched it. Who bought. Who holds how much. What the creator earned.</td></tr>
+    </table></div>
+    <div class="qs"><a href="/docs#faq">Do I need to connect a wallet?</a><a href="/docs#seen">What stays private?</a><a href="/docs#faq">How do I return to my swap?</a></div>
+  </section>
+</main>
+
+<section class="fin"><p class="mono" style="color:var(--sig);letter-spacing:.22em">Your next move</p><h3 style="margin-top:14px">Ready to go unseen?</h3><div class="go"><a class="btn ink" href="/pool">Explore the pool →</a><a class="btn line" href="/swap">Start a swap →</a><a class="btn line" href="/launch">Launch a token →</a></div></section>
+
+<script type="module">
+import { chrome, $, get, post, num, compact, esc, TOKEN_MINT } from '/common.js';
+chrome('/');
+
+// ---- the hero: a void that bends the headline around it ----
+(async function piece() {
+  const cv = $('gl'), gl = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' }); if (!gl) return;
+  const sh = (t, s) => { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); return o; };
+  const pr = gl.createProgram();
+  gl.attachShader(pr, sh(gl.VERTEX_SHADER, 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'));
+  gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, `precision highp float;uniform sampler2D T;uniform vec2 R,C;uniform float H,t;
+    float ink(vec2 p,float e){vec2 d=p-C;float r=length(d)+1e-3;float k=r/(H*2.6);vec2 q=p-d/r*(e*e/r)/(1.+k*k*k);vec2 uv=q/R;if(uv.x<0.||uv.x>1.||uv.y<0.||uv.y>1.)return 0.;return texture2D(T,uv).a;}
+    float n(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
+    void main(){vec2 p=vec2(gl_FragCoord.x,R.y-gl_FragCoord.y);vec2 d=p-C;float r=length(d);float E=H*1.42;
+      vec3 a=vec3(ink(p,E));
+      vec3 wall=vec3(.02)+vec3(.075)*smoothstep(1.05,0.,length((p-vec2(R.x*.5,R.y*.34))/R.yy));
+      vec3 type=mix(vec3(.62),vec3(1.),smoothstep(R.y*.62,R.y*.12,p.y));
+      vec3 col=wall+a*(type-wall);
+      float o=max(r-H,0.);float sw=.75+.25*sin(atan(d.y,d.x)*3.+t*.9);
+      col+=vec3(.82)*(.95*exp(-o/(H*.07))*sw+.30*exp(-o/(H*.42)));
+      col+=vec3(1.)*.6*exp(-o/(H*.022));
+      col=mix(vec3(0.),col,smoothstep(H-1.2,H+1.2,r));
+      col=mix(col,vec3(.02),smoothstep(R.y*.60,R.y*.98,p.y)*.92);
+      col+=(n(gl_FragCoord.xy+t)-.5)*.018;
+      gl_FragColor=vec4(col,1.);}`));
+  gl.linkProgram(pr); gl.useProgram(pr);
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(pr, 'a'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  const U = (n) => gl.getUniformLocation(pr, n), tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  try { await Promise.all([document.fonts.load('800 120px "Bricolage Grotesque"'), document.fonts.ready]); } catch { /* draw with whatever is there */ }
+  let W = 0, Hh = 0, hole = 0, mid = 0; const c = { x: 0, y: 0 }, aim = { x: 0, y: 0, live: 0 };
+  function words() {
+    const dpr = Math.min(devicePixelRatio || 1, 2); W = cv.width = Math.round(cv.clientWidth * dpr); Hh = cv.height = Math.round(cv.clientHeight * dpr); gl.viewport(0, 0, W, Hh);
+    const tc = document.createElement('canvas'), k = Math.min(1, 2048 / W); tc.width = Math.round(W * k); tc.height = Math.round(Hh * k); const x = tc.getContext('2d');
+    const lines = ['NOTHING', 'REFLECTS'], fit = tc.width * (tc.width < tc.height ? .86 : .8), area = tc.height * .42; x.fillStyle = '#fff'; x.textBaseline = 'alphabetic'; x.textAlign = 'center'; try { x.fontStretch = 'condensed'; } catch { /* older canvas */ }
+    const sizes = lines.map((l) => { x.font = '800 200px "Bricolage Grotesque",Arial Black,sans-serif'; return (200 * fit) / x.measureText(l).width; });
+    const cap = (area * .92) / lines.length / .8, sz = sizes.map((s) => Math.min(s, cap)), total = sz.reduce((s, v) => s + v * .8, 0); let y = tc.height * .11 + (area - total) / 2;
+    lines.forEach((l, i) => { x.font = `800 ${sz[i]}px "Bricolage Grotesque",Arial Black,sans-serif`; y += sz[i] * .8; x.fillText(l, tc.width / 2, y - sz[i] * .03); });
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);
+    mid = Hh * .32; hole = Math.min(W * .17, Hh * .17); if (!c.x) { c.x = W * .5; c.y = mid; }
+  }
+  words(); addEventListener('resize', () => { clearTimeout(words.t); words.t = setTimeout(words, 120); });
+  const move = (e) => { const r = cv.getBoundingClientRect(), k = W / r.width; aim.x = (e.clientX - r.left) * k; aim.y = Math.min((e.clientY - r.top) * k, Hh * .62); aim.live = performance.now(); };
+  cv.parentElement.addEventListener('pointermove', move); cv.parentElement.addEventListener('pointerdown', move);
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  (function frame(now) {
+    const s = now / 1000, idle = now - aim.live > 2600 || !aim.live;
+    const tx = idle ? W * (.5 + .22 * Math.sin(s * .31)) : aim.x, ty = idle ? mid + Hh * .1 * Math.sin(s * .47 + 1.1) : aim.y;
+    c.x += (tx - c.x) * (still ? 1 : .045); c.y += (ty - c.y) * (still ? 1 : .045);
+    gl.uniform2f(U('R'), W, Hh); gl.uniform2f(U('C'), c.x, c.y); gl.uniform1f(U('H'), hole * (1 + .02 * Math.sin(s * 1.3))); gl.uniform1f(U('t'), still ? 0 : (s % 62.83));
+    gl.drawArrays(gl.TRIANGLES, 0, 3); if (still) return; if (cv.getBoundingClientRect().bottom > 0) requestAnimationFrame(frame); else setTimeout(() => requestAnimationFrame(frame), 300);
+  })(0);
+})();
+
+// ---- live figures ----
+const fig = (n) => (n >= 100 ? compact(n) : num(n, n >= 1 ? 2 : 4));
+get('/api/stats').then((s) => { $('sTvl').textContent = fig(s.tvl); $('sAcc').textContent = num(s.accounts, 0); $('sSent').textContent = fig(s.sent); $('sOut').textContent = fig(s.withdrawn); $('sDep').textContent = num(s.deposits, 0); $('sLau').textContent = num(s.launches, 0); $('fShield').textContent = fig(s.fees.shield); $('fTrade').textContent = fig(s.fees.trade); $('fCre').textContent = fig(s.fees.creators); $('fVol').textContent = fig(s.volume); }).catch(() => {});
+get('/api/launches?sort=volume').then((l) => { if (l.length) $('lMini').innerHTML = l.slice(0, 3).map((x) => `<span style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--online);font:600 14px var(--disp)"><span>${esc(x.name)} <small style="font:400 11px var(--mono);color:var(--onmute)">$${esc(x.symbol)}</small></span><small style="font:400 11px var(--mono);color:var(--onmute)">${num(x.mcap, 1)} SOL</small></span>`).join(''); }).catch(() => {});
+get('/api/swap/tokens').then((t) => {
+  $('nCh').textContent = new Set(t.map((x) => x.chain)).size;
+  const from = t.find((x) => x.symbol === 'SOL' && x.chain === 'sol'), outs = [['ZEC', 'zec'], ['BTC', 'btc'], ['ETH', 'eth'], ['USDC', 'base']].map(([s, c]) => t.find((x) => x.symbol === s && x.chain === c)).filter(Boolean);
+  const show = async (to, b) => { [...$('qTo').children].forEach((x) => x.classList.toggle('on', x === b)); $('qOut').textContent = '·'; try { const q = await post('/api/swap/quote', { from: from.id, to: to.id, amount: '1' }); $('qOut').textContent = num(q.amountOut, 6) + ' ' + to.symbol; $('qSub').textContent = `on ${to.chainName} · about ${q.seconds}s`; } catch { $('qOut').textContent = (from.price / to.price).toFixed(5) + ' ' + to.symbol; $('qSub').textContent = 'on ' + to.chainName; } };
+  $('qTo').innerHTML = outs.map((o) => `<button>${o.symbol}</button>`).join(''); [...$('qTo').children].forEach((b, i) => { b.onclick = () => show(outs[i], b); }); if (outs[0]) show(outs[0], $('qTo').children[0]);
+}).catch(() => {});
+if (TOKEN_MINT) $('caBox').innerHTML = `<p class="lbl">Solana mint</p><div class="copy" style="margin-top:14px" data-copy="${TOKEN_MINT}" data-said="Address copied"><span>${TOKEN_MINT}</span><em>copy</em></div><div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap"><a class="btn line" style="flex:1" href="https://solscan.io/token/${TOKEN_MINT}" target="_blank" rel="noopener">Verify on Solscan</a><a class="btn on" style="flex:1;width:auto" href="https://jup.ag/swap?buy=${TOKEN_MINT}&sell=So11111111111111111111111111111111111111112" target="_blank" rel="noopener">Buy $VANTA</a></div>`;
+</script>
+</body>
+</html>

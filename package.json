@@ -1,0 +1,10 @@
+{
+  "name": "vanta",
+  "version": "0.1.0",
+  "description": "VANTA: private swaps, shielded SOL balances and a private launchpad on Solana.",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": { "start": "node server/index.js", "test": "node test/run.js" },
+  "engines": { "node": ">=22" },
+  "license": "MIT"
+}

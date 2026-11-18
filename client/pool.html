@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VANTA · Pool</title>
+<meta name="description" content="Shielded SOL balances. Deposit, send privately between accounts, and withdraw to any Solana wallet.">
+<meta property="og:title" content="VANTA · Pool"><meta property="og:image" content="{{SITE_URL}}/og.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/vanta.css">
+<style>
+.bal{font:800 clamp(52px,8vw,84px)/.9 var(--disp);font-variation-settings:'wdth' 78;letter-spacing:-.04em}.bal small{font:400 12px var(--mono);letter-spacing:.08em;color:var(--onmute);margin-left:8px}
+.seg{display:flex;gap:8px;margin-top:10px}.seg button{flex:1;border:1px solid var(--online);padding:10px;font:400 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--onmute);border-radius:11px;text-align:left;line-height:1.5}.seg button b{display:block;color:var(--on);font-weight:500}.seg button.on{border-color:var(--vio);background:rgba(255,255,255,0.042)}
+.path{display:flex;align-items:center;gap:10px;max-width:520px}.path span{white-space:nowrap}.path i{flex:1;min-width:14px;border-top:1px dashed var(--vio);height:0}.path b{background:rgba(255,255,255,0.067);border:1px solid var(--vio);color:var(--on);padding:8px 12px;border-radius:10px;white-space:nowrap;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase}.path span{font:400 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+</style>
+</head>
+<body>
+<main class="app wrap">
+  <p class="plq">02 / Pool</p>
+  <h1>Your SOL. <span class="serif">Unlit.</span></h1>
+  <div class="stage">
+    <div class="side">
+      <div class="path"><span>Your wallet</span><i></i><b>Shielded balance</b><i></i><span>Any wallet</span></div>
+      <p class="plq card" style="max-width:440px"><b>How it works.</b> A deposit and a withdrawal are ordinary Solana transfers, visible like any other. Everything between them happens inside the pool: balances and sends between accounts are never written to a chain, and withdrawals leave after a random wait, to whatever address you name.</p>
+      <div class="figs" style="max-width:520px"><div class="fig"><b id="sTvl">·</b><span class="plq">SOL shielded</span></div><div class="fig"><b id="sAcc">·</b><span class="plq">Accounts</span></div><div class="fig"><b id="sDep">·</b><span class="plq">Deposits</span></div></div>
+      <div><p class="plq" style="margin-bottom:6px"><b>At the edge of the pool</b> · the only part a chain records</p><table class="led" id="tape"></table></div>
+    </div>
+
+    <div class="slab" id="box"></div>
+  </div>
+</main>
+
+<script type="module">
+import { chrome, $, get, signed, account, gate, lock, sol, num, esc, ago, short, copy, toast, b58enc, LAMPORTS } from '/common.js';
+chrome('/pool');
+let cfg = { rules: {}, pool: {} }, me = null, tab = 'deposit', pending = null, speed = 'standard';
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58dec(str) { let n = 0n; for (const c of str) { const v = B58.indexOf(c); if (v < 0) throw new Error('not base58'); n = n * 58n + BigInt(v); } const out = []; while (n > 0n) { out.unshift(Number(n & 255n)); n >>= 8n; } for (const c of str) { if (c === '1') out.unshift(0); else break; } return Uint8Array.from(out); }
+const phantom = () => (window.phantom?.solana?.isPhantom ? window.phantom.solana : window.solana?.isPhantom ? window.solana : null);
+
+async function stats() { try { const s = await get('/api/stats'); $('sTvl').textContent = num(s.tvl, s.tvl >= 100 ? 0 : 3); $('sAcc').textContent = num(s.accounts, 0); $('sDep').textContent = num(s.deposits, 0); $('tape').innerHTML = s.tape.length ? s.tape.map((t) => `<tr><td>${t.kind === 'in' ? 'Deposit' : 'Withdrawal'}</td><td>${sol(t.lamports)} SOL</td><td class="mute">${ago(t.t)} ago</td></tr>`).join('') : '<tr><td class="mute">Nothing has crossed yet.</td></tr>'; } catch { /* keep the last figures */ } }
+
+async function refresh() { me = await signed('/api/pool/me'); draw(); }
+function draw() {
+  const b = $('box'), a = me;
+  const body = {
+    deposit: () => pending
+      ? `<p class="lbl">Send exactly</p><div class="copy" style="margin-top:8px" data-copy="${pending.sol}" data-said="Amount copied"><span>${pending.sol} SOL</span><em>copy</em></div><p class="lbl" style="margin:14px 0 8px">To the pool</p><div class="copy" data-copy="${pending.address}" data-said="Address copied"><span>${pending.address}</span><em>copy</em></div><p class="lbl" style="margin-top:12px;text-transform:none;letter-spacing:0;font-size:12px;line-height:1.7">The amount is exact on purpose: the last digits are how the pool knows this deposit is yours. Send from any wallet, then paste the transaction signature.</p>${phantom() ? '<button class="btn on" id="dPh" style="margin-top:14px">Pay with Phantom</button>' : ''}<input id="dSig" placeholder="transaction signature" autocomplete="off" spellcheck="false" style="margin-top:14px"><button class="btn ${phantom() ? 'line' : 'on'}" id="dOk" style="margin-top:12px;width:100%">I sent it</button><button class="btn sm" id="dNo" style="margin-top:10px;color:var(--onmute)">Start over</button>`
+      : (cfg.pool.open ? `<p class="lbl">Deposit</p><input class="big" id="dAmt" inputmode="decimal" placeholder="0.0" autocomplete="off" style="margin-top:6px"><p class="lbl" style="margin-top:8px">SOL · ${cfg.rules.minDeposit} to ${cfg.rules.maxDeposit} · 0.5% to shield</p><button class="btn on" id="dGo" style="margin-top:18px">Continue</button>` : '<p class="lbl">Deposits</p><p style="font:600 24px/1.2 var(--disp);margin-top:10px">Opening shortly.</p><p class="lbl" style="margin-top:10px;text-transform:none;letter-spacing:0;font-size:12px;line-height:1.7">Your account is ready. Share its address and you can receive shielded SOL from anyone already inside.</p>'),
+    send: () => `<p class="lbl">Send privately</p><input class="big" id="sAmt" inputmode="decimal" placeholder="0.0" autocomplete="off" style="margin-top:6px"><p class="lbl" style="margin-top:8px">SOL · no fee · instant · nothing on-chain</p><p class="lbl" style="margin-top:18px">To a VANTA account</p><input id="sTo" placeholder="vn_…" autocomplete="off" spellcheck="false"><button class="btn on" id="sGo" style="margin-top:18px">Send</button>`,
+    withdraw: () => `<p class="lbl">Withdraw</p><input class="big" id="wAmt" inputmode="decimal" placeholder="0.0" autocomplete="off" style="margin-top:6px"><p class="lbl" style="margin-top:8px">SOL · 0.5% to unshield</p><p class="lbl" style="margin-top:18px">To a Solana address</p><input id="wTo" placeholder="a wallet that has never touched your deposit wallet" autocomplete="off" spellcheck="false"><div class="seg"><button data-s="standard" class="${speed === 'standard' ? 'on' : ''}"><b>Quiet</b>5 to 30 minutes, random</button><button data-s="fast" class="${speed === 'fast' ? 'on' : ''}"><b>Fast</b>under 2 minutes</button></div><button class="btn on" id="wGo" style="margin-top:18px">Withdraw</button>${a.withdrawals.length ? `<hr><table class="led">${a.withdrawals.slice(0, 5).map((w) => `<tr><td>${sol(w.lamports)} SOL</td><td>${short(w.to, 5, 4)}</td><td style="text-align:right">${w.status === 'paid' ? (w.signature && w.signature.length > 40 ? `<a href="https://solscan.io/tx/${esc(w.signature)}" target="_blank" rel="noopener" style="text-decoration:underline">Paid</a>` : 'Paid') : '<span class="dot"></span>Leaving ' + (w.due > Date.now() ? 'in about ' + Math.max(1, Math.round((w.due - Date.now()) / 60e3)) + 'm' : 'now')}</td></tr>`).join('')}</table>` : ''}`,
+    activity: () => `${a.positions.length ? `<p class="lbl" style="margin-bottom:6px">Launchpad holdings</p><table class="led">${a.positions.map((p) => `<tr><td><a href="/t/${p.id}" style="text-decoration:underline">$${esc(p.symbol)}</a></td><td>${num(p.tokens / 1e6, 0)}</td><td style="text-align:right">${sol(p.value)} SOL</td></tr>`).join('')}</table><hr>` : ''}<p class="lbl" style="margin-bottom:6px">Only you can read this</p><table class="led">${a.log.length ? a.log.map((l) => `<tr><td>${esc(l.text)}</td><td style="text-align:right">${l.lamports ? (l.lamports > 0 ? '+' : '') + sol(l.lamports) : ''}</td><td class="mute" style="text-align:right;color:var(--onmute)">${ago(l.t)}</td></tr>`).join('') : '<tr><td style="color:var(--onmute)">Nothing yet.</td></tr>'}</table>`,
+  }[tab]();
+  b.innerHTML = `<p class="lbl">Shielded balance</p><p class="bal" style="margin:8px 0 14px">${sol(a.balance)}<small>SOL</small></p><div class="copy" data-copy="${a.account}" data-said="Account address copied"><span>${short(a.account, 14, 10)}</span><em>your address · copy</em></div>
+    <div class="tabs" style="margin-top:24px">${['deposit', 'send', 'withdraw', 'activity'].map((t) => `<button data-t="${t}" class="${t === tab ? 'on' : ''}">${t}</button>`).join('')}</div>${body}<p class="err" id="err"></p>
+    <hr><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn line sm" id="kShow">Recovery key</button><button class="btn line sm" id="kLock">Lock this browser</button></div><div id="kBox"></div>`;
+  const say = (e) => { $('err').textContent = e.message || e; }, lam = (id) => Math.round(Number($(id).value) * LAMPORTS);
+  b.querySelectorAll('[data-t]').forEach((x) => { x.onclick = () => { tab = x.dataset.t; draw(); }; });
+  b.querySelectorAll('[data-s]').forEach((x) => { x.onclick = () => { speed = x.dataset.s; const v = [$('wAmt').value, $('wTo').value]; draw(); $('wAmt').value = v[0]; $('wTo').value = v[1]; }; });
+  const busy = (btn, fn) => async () => { const t = btn.textContent; btn.disabled = true; $('err').textContent = ''; try { await fn(); } catch (e) { say(e); } finally { if (btn.isConnected) { btn.disabled = false; btn.textContent = t; } } };
+  if ($('dGo')) $('dGo').onclick = busy($('dGo'), async () => { pending = await signed('/api/pool/intent', { lamports: lam('dAmt') }); draw(); });
+  if ($('dNo')) $('dNo').onclick = () => { pending = null; draw(); };
+  const confirm = async (signature) => { for (let i = 0; i < 40; i++) { const r = await signed('/api/pool/confirm', { intent: pending.intent, signature }); if (!r.pending) { pending = null; toast(`Shielded ${sol(r.credited)} SOL`); tab = 'activity'; await refresh(); stats(); return; } $('err').textContent = 'Waiting for Solana to confirm…'; await new Promise((ok) => setTimeout(ok, 3000)); } throw new Error('Solana has not confirmed it yet. Press "I sent it" again in a minute.'); };
+  if ($('dOk')) $('dOk').onclick = busy($('dOk'), () => { const s = $('dSig').value.trim(); if (!s) throw new Error('Paste the transaction signature'); return confirm(s); });
+  if ($('dPh')) $('dPh').onclick = busy($('dPh'), async () => {
+    const p = phantom(), from = (await p.connect()).publicKey.toString(), { blockhash } = await get('/api/pool/blockhash'), n = BigInt(pending.lamports), amt = new Uint8Array(8); for (let i = 0; i < 8; i++) amt[i] = Number((n >> BigInt(8 * i)) & 255n);
+    const parts = [Uint8Array.of(1, 0, 1, 3), b58dec(from), b58dec(pending.address), new Uint8Array(32), b58dec(blockhash), Uint8Array.of(1, 2, 2, 0, 1, 12, 2, 0, 0, 0), amt], msg = new Uint8Array(parts.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of parts) { msg.set(x, o); o += x.length; }
+    $('dPh').textContent = 'Approve in Phantom…'; const r = await p.request({ method: 'signAndSendTransaction', params: { message: b58enc(msg) } }); $('dSig').value = r.signature; await confirm(r.signature);
+  });
+  if ($('sGo')) $('sGo').onclick = busy($('sGo'), async () => { await signed('/api/pool/send', { to: $('sTo').value.trim(), lamports: lam('sAmt') }); toast('Sent. Nothing was written to a chain.'); await refresh(); });
+  if ($('wGo')) $('wGo').onclick = busy($('wGo'), async () => { const r = await signed('/api/pool/withdraw', { to: $('wTo').value.trim(), lamports: lam('wAmt'), speed }); toast(`${sol(r.lamports)} SOL is on its way out`); await refresh(); });
+  $('kShow').onclick = async () => { const k = (await account()).seed; $('kBox').innerHTML = `<div class="copy" style="margin-top:12px" data-copy="${k}" data-said="Recovery key copied. Keep it somewhere only you can reach."><span>${k}</span><em>copy</em></div><p class="lbl" style="margin-top:8px;text-transform:none;letter-spacing:0;font-size:12px;line-height:1.7">This is the whole account. Anyone holding it can spend the balance, and without it nobody can, including us.</p>`; };
+  $('kLock').onclick = () => { if (confirm_('Lock removes the key from this browser. Without your recovery key the balance cannot be reached again. Lock now?')) { lock(); me = null; start(); } };
+}
+const confirm_ = (m) => window.confirm(m);
+async function start() { if (!(await account())) return gate($('box'), start); try { await refresh(); } catch (e) { $('box').innerHTML = `<p class="err">${esc(e.message)}</p>`; } }
+cfg = await get('/api/config').catch(() => cfg); stats(); setInterval(stats, 15000); start(); setInterval(() => { if (me && tab !== 'deposit' && !document.activeElement?.matches('input')) refresh().catch(() => {}); }, 12000);
+</script>
+</body>
+</html>

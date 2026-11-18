@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VANTA · Swap</title>
+<meta name="description" content="Private swaps across 30+ chains. No wallet connection: get a quote, send from any wallet to a one-time address, track delivery.">
+<meta property="og:title" content="VANTA · Swap"><meta property="og:image" content="{{SITE_URL}}/og.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="/favicon.svg"><link rel="stylesheet" href="/vanta.css">
+<style>
+.steps{display:flex;flex-direction:column;gap:0}.steps div{display:flex;gap:12px;align-items:baseline;padding:9px 0;font:400 12px var(--mono);color:#55524c;border-bottom:1px solid var(--online)}
+.steps div i{width:7px;height:7px;border-radius:50%;border:1px solid #55524c;flex:none;transform:translateY(-1px)}.steps div.done{color:var(--on)}.steps div.done i{background:var(--vio);border-color:var(--vio)}.steps div.now{color:var(--on)}.steps div.now i{background:var(--sig);border-color:var(--sig);animation:pulse 1.4s infinite}
+.flip{display:flex;justify-content:center;margin:6px 0}.flip button{width:34px;height:34px;border:1px solid var(--online);border-radius:50%;font:400 14px var(--mono);color:var(--onmute)}.flip button:hover{color:var(--on);border-color:var(--vio)}
+</style>
+</head>
+<body>
+<main class="app wrap">
+  <p class="plq">01 / Swap</p>
+  <h1>Send here. <span class="serif">Arrive there.</span></h1>
+  <div class="stage">
+    <div class="side">
+      <p class="plq card" style="max-width:420px"><b>No wallet connection.</b> You get a one-time deposit address. You send to it from any wallet. The recipient is paid from the route's own liquidity on the other chain, so no transaction joins your two addresses.</p>
+      <div>
+        <p class="plq" style="margin-bottom:10px"><b>Track a transfer</b></p>
+        <div style="display:flex;gap:10px;max-width:420px"><input id="trk" placeholder="deposit address" autocomplete="off" spellcheck="false" style="flex:1;background:transparent;border:0;border-bottom:1px solid var(--line);padding:9px 0;font:400 13px var(--mono);outline:0"><button class="btn line sm" id="trkGo">Track</button></div>
+      </div>
+      <div id="histBox" class="hide"><p class="plq" style="margin-bottom:6px"><b>Your transfers</b> · kept in this browser only</p><table class="led" id="hist"></table></div>
+    </div>
+
+    <div class="slab" id="form">
+      <p class="lbl">You send</p>
+      <div class="pair" style="margin-top:6px"><div><input class="big" id="amt" inputmode="decimal" value="1" autocomplete="off"></div><button class="pick" id="pFrom">·</button></div>
+      <p class="lbl" id="usdIn" style="margin-top:6px">&nbsp;</p>
+      <div class="flip"><button id="flip" aria-label="Swap direction">⇅</button></div>
+      <p class="lbl">You receive</p>
+      <div class="pair" style="margin-top:6px"><div><input class="big" id="out" readonly value="·" tabindex="-1"></div><button class="pick" id="pTo">·</button></div>
+      <p class="lbl" id="usdOut" style="margin-top:6px">&nbsp;</p>
+      <hr>
+      <p class="lbl" id="lRec">Recipient address</p><input id="rec" placeholder="where it lands" autocomplete="off" spellcheck="false">
+      <p class="lbl" id="lRef" style="margin-top:16px">Refund address</p><input id="ref" placeholder="where it returns if the route cannot fill" autocomplete="off" spellcheck="false">
+      <div class="row" style="margin-top:16px"><span>Route</span><span id="rt">·</span></div>
+      <div class="row"><span>Arrives in</span><span id="eta">·</span></div>
+      <div class="row"><span>Least you receive</span><span id="min">·</span></div>
+      <button class="btn on" id="go" style="margin-top:18px">Get deposit address</button>
+      <p class="err" id="err"></p>
+    </div>
+
+    <div class="slab hide" id="order">
+      <p class="lbl" id="oHead">Send exactly</p>
+      <p style="font:700 34px/1.1 var(--disp);letter-spacing:-.02em;margin-top:8px" id="oAmt"></p>
+      <p class="lbl" style="margin:18px 0 8px">To this one-time address</p>
+      <div class="copy" id="oAddr"><span></span><em>copy</em></div>
+      <div id="oMemoBox" class="hide"><p class="lbl" style="margin:14px 0 8px">With this memo</p><div class="copy" id="oMemo"><span></span><em>copy</em></div></div>
+      <hr>
+      <div class="steps" id="oSteps"></div>
+      <div class="row" style="margin-top:14px"><span>You receive</span><span id="oOut"></span></div>
+      <div class="row"><span>Recipient</span><span id="oRec"></span></div>
+      <div class="row" id="oTxRow"><span>Delivery</span><span id="oTx">·</span></div>
+      <button class="btn line" id="oNew" style="margin-top:18px;width:100%">New swap</button>
+    </div>
+  </div>
+</main>
+
+<script type="module">
+import { chrome, $, get, post, num, esc, short, ago, copy, toast } from '/common.js';
+chrome('/swap');
+let T = [], from, to, quoteTimer, seq = 0;
+const tok = (id) => T.find((t) => t.id === id);
+const label = (t) => `${esc(t.symbol)} <small>${esc(t.chainName)}</small>`;
+function paint() { $('pFrom').innerHTML = label(from); $('pTo').innerHTML = label(to); $('lRec').textContent = `Recipient address · ${to.chainName}`; $('lRef').textContent = `Refund address · ${from.chainName}`; quote(); }
+function quote() {
+  clearTimeout(quoteTimer); const my = ++seq, amount = $('amt').value.trim(); $('err').textContent = '';
+  if (!(Number(amount) > 0)) { $('out').value = '·'; $('usdIn').innerHTML = '&nbsp;'; return; }
+  $('usdIn').textContent = '$' + num(Number(amount) * from.price);
+  quoteTimer = setTimeout(async () => {
+    try { const q = await post('/api/swap/quote', { from: from.id, to: to.id, amount }); if (my !== seq) return;
+      $('out').value = num(q.amountOut, 8); $('usdOut').textContent = '$' + num(q.amountOutUsd); $('eta').textContent = 'about ' + (q.seconds < 90 ? q.seconds + ' seconds' : Math.round(q.seconds / 60) + ' minutes'); $('min').textContent = num(q.minOut, 8) + ' ' + to.symbol; $('rt').textContent = q.confidential ? 'Confidential · NEAR Intents' : 'NEAR Intents';
+    } catch (e) { if (my !== seq) return; $('out').value = '·'; $('usdOut').innerHTML = '&nbsp;'; $('eta').textContent = $('min').textContent = '·'; $('err').textContent = e.message; }
+  }, 350);
+}
+function pick(side) {
+  const v = document.createElement('div'); v.className = 'veil';
+  const chains = [...new Map(T.map((t) => [t.chain, t.chainName])).entries()]; let chain = '';
+  v.innerHTML = `<div class="slab"><p class="lbl">${side === 'from' ? 'You send' : 'You receive'}</p><input id="pq" placeholder="search asset or chain" autocomplete="off" style="margin-top:6px"><div class="chips"><button data-c="" class="on">All</button>${chains.slice(0, 11).map(([c, n]) => `<button data-c="${c}">${esc(n)}</button>`).join('')}</div><div class="list" id="pl"></div></div>`;
+  document.body.append(v); const close = () => v.remove();
+  const draw = () => { const q = v.querySelector('#pq').value.trim().toLowerCase(); v.querySelector('#pl').innerHTML = T.filter((t) => (!chain || t.chain === chain) && (!q || t.symbol.toLowerCase().includes(q) || t.chainName.toLowerCase().includes(q))).slice(0, 120).map((t) => `<button data-id="${esc(t.id)}"><span>${esc(t.symbol)}</span><small>${esc(t.chainName)}</small></button>`).join('') || '<p class="lbl" style="padding:18px 26px">Nothing matches.</p>'; };
+  v.addEventListener('click', (e) => { if (e.target === v) return close(); const c = e.target.closest('[data-c]'); if (c) { chain = c.dataset.c; v.querySelectorAll('[data-c]').forEach((x) => x.classList.toggle('on', x === c)); return draw(); }
+    const b = e.target.closest('[data-id]'); if (!b) return; const t = tok(b.dataset.id); if (side === 'from') { if (t.id === to.id) to = from; from = t; $('ref').value = ''; } else { if (t.id === from.id) from = to; to = t; $('rec').value = ''; } close(); paint(); });
+  v.querySelector('#pq').oninput = draw; draw(); v.querySelector('#pq').focus(); addEventListener('keydown', function k(e) { if (e.key === 'Escape') { close(); removeEventListener('keydown', k); } });
+}
+$('pFrom').onclick = () => pick('from'); $('pTo').onclick = () => pick('to'); $('amt').oninput = quote;
+$('flip').onclick = () => { [from, to] = [to, from]; const a = $('rec').value; $('rec').value = $('ref').value; $('ref').value = a; paint(); };
+
+// ---- orders live in this browser: a list of deposit addresses, nothing more ----
+const saved = () => { try { return JSON.parse(localStorage.getItem('vanta_swaps') || '[]'); } catch { return []; } };
+const keep = (o) => { const l = saved().filter((x) => x.deposit !== o.deposit); l.unshift(o); localStorage.setItem('vanta_swaps', JSON.stringify(l.slice(0, 20))); drawHist(); };
+function drawHist() { const l = saved(); $('histBox').classList.toggle('hide', !l.length); $('hist').innerHTML = l.map((o) => `<tr><td><a href="#${esc(o.deposit)}" style="text-decoration:underline">${esc(o.pair)}</a></td><td>${esc(o.amount)}</td><td class="mute">${ago(o.t)} ago</td></tr>`).join(''); }
+const ORDERED = [['PENDING_DEPOSIT', 'Waiting for your deposit'], ['KNOWN_DEPOSIT_TX', 'Deposit seen'], ['PROCESSING', 'Routing'], ['SUCCESS', 'Delivered']];
+let poll;
+async function track(deposit, memo, first) {
+  clearTimeout(poll); $('form').classList.add('hide'); $('order').classList.remove('hide'); history.replaceState?.(null, '', '#' + deposit);
+  $('oAddr').firstElementChild.textContent = deposit; $('oAddr').dataset.copy = deposit; $('oAddr').dataset.said = 'Address copied';
+  $('oMemoBox').classList.toggle('hide', !memo); if (memo) { $('oMemo').firstElementChild.textContent = memo; $('oMemo').dataset.copy = memo; }
+  if (first) { $('oAmt').textContent = `${first.amountIn} ${first.from.symbol}`; $('oOut').textContent = `${num(first.amountOut, 8)} ${first.to.symbol} on ${first.to.chain}`; $('oRec').textContent = short(first.recipient, 8, 6); }
+  const tick = async () => {
+    try {
+      const s = await get('/api/swap/status?address=' + encodeURIComponent(deposit) + (memo ? '&memo=' + encodeURIComponent(memo) : ''));
+      if (s.from && s.amountIn) $('oAmt').textContent = `${s.amountIn} ${s.from.symbol}`; if (s.to && s.amountOut) $('oOut').textContent = `${num(s.amountOut, 8)} ${s.to.symbol} on ${s.to.chain}`;
+      const at = ORDERED.findIndex(([k]) => k === s.status), odd = at < 0;
+      $('oSteps').innerHTML = odd ? `<div class="now"><i></i>${esc(s.stage)}${s.refunded ? ' · ' + esc(s.refunded) + ' returned' : ''}</div>` : ORDERED.map(([, l], i) => `<div class="${i < at || s.status === 'SUCCESS' ? 'done' : i === at ? 'now' : ''}"><i></i>${l}</div>`).join('');
+      $('oHead').textContent = s.status === 'PENDING_DEPOSIT' ? 'Send exactly' : s.status === 'SUCCESS' ? 'Delivered' : 'In flight'; $('oTx').textContent = s.destinationTx[0] ? short(s.destinationTx[0], 10, 8) : '·'; if (s.destinationTx[0]) { $('oTxRow').dataset.copy = s.destinationTx[0]; $('oTxRow').style.cursor = 'pointer'; }
+      if (!s.done) poll = setTimeout(tick, s.status === 'PENDING_DEPOSIT' ? 6000 : 3500);
+    } catch (e) { $('oSteps').innerHTML = `<div class="now"><i></i>${esc(e.message)}</div>`; poll = setTimeout(tick, 9000); }
+  };
+  tick();
+}
+$('go').onclick = async () => {
+  $('err').textContent = ''; $('go').disabled = true; $('go').textContent = 'Preparing…';
+  try { const o = await post('/api/swap/order', { from: from.id, to: to.id, amount: $('amt').value.trim(), recipient: $('rec').value, refundTo: $('ref').value });
+    keep({ deposit: o.deposit, memo: o.memo, pair: `${o.from.symbol} → ${o.to.symbol}`, amount: `${o.amountIn} ${o.from.symbol}`, t: Date.now() }); track(o.deposit, o.memo, o);
+  } catch (e) { $('err').textContent = e.message; } finally { $('go').disabled = false; $('go').textContent = 'Get deposit address'; }
+};
+$('oNew').onclick = () => { clearTimeout(poll); $('order').classList.add('hide'); $('form').classList.remove('hide'); history.replaceState?.(null, '', location.pathname); };
+$('trkGo').onclick = () => { const a = $('trk').value.trim(); if (a) track(a, (saved().find((x) => x.deposit === a) || {}).memo || ''); };
+addEventListener('hashchange', () => { const a = location.hash.slice(1); if (a) track(a, (saved().find((x) => x.deposit === a) || {}).memo || ''); });
+
+get('/api/swap/tokens').then((t) => { T = t; from = T.find((x) => x.symbol === 'SOL' && x.chain === 'sol') || T[0]; to = T.find((x) => x.symbol === 'ZEC' && x.chain === 'zec') || T[1]; paint(); drawHist(); const a = location.hash.slice(1); if (a) track(a, (saved().find((x) => x.deposit === a) || {}).memo || ''); }).catch((e) => { $('err').textContent = e.message; });
+</script>
+</body>
+</html>

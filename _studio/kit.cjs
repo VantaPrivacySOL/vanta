@@ -1,4 +1,4 @@
-// VANTA brand kit: pfp, banner, share image and 10 graphics.  node _studio/kit.cjs [name]
+// VANTA brand kit (the pfp is drawn by pfp.cjs): banner, share image and 10 graphics.  node _studio/kit.cjs [name]
 'use strict';
 const fs = require('fs'), path = require('path'), { open } = require('./cdp.cjs'), { LINE, TICK, CA, HEAD, FOOT, READY, VOID, WORD } = require('./lib.cjs');
 const OUT = path.join(__dirname, '..', 'brand'), SRC = path.join(__dirname, 'kit'); fs.mkdirSync(OUT, { recursive: true }); fs.mkdirSync(SRC, { recursive: true });
@@ -13,7 +13,6 @@ const kv = (rows, left, top, w) => `<div class="card" style="left:${left}px;top:
 const three = (items, top = 400, h = 290) => items.map(([k, a, b], i) => `<div class="card" style="left:${70 + i * 497}px;top:${top}px;width:467px;height:${h}px;padding:30px 32px"><div class="eye">${k}</div><div style="font:800 50px/1 'Bricolage Grotesque';font-stretch:84%;margin-top:40px">${a}</div><div class="dim" style="font-size:24px;line-height:1.4;margin-top:16px">${b}</div></div>`).join('');
 
 const G = {
-  'vanta-pfp': [1000, 1000, () => HEAD(1000, 1000) + VOID(560, 220, 220) + END],
   'vanta-banner': [1500, 500, () => HEAD(1500, 500) + WORD('VANTA', 430, 40) + VOID(250, 625, 110) + `<div style="position:absolute;left:60px;bottom:40px;font:600 28px 'Bricolage Grotesque'">Private swaps. Shielded balances. <span class="it">The first private launchpad.</span></div><div class="ft" style="position:absolute;right:60px;bottom:46px">${LINE ? LINE + ' · ' : ''}<b>${TICK}</b></div>` + END],
   'vanta-og': [1200, 630, () => HEAD(1200, 630) + WORD('VANTA', 400, 70) + VOID(250, 475, 120) + `<div style="position:absolute;left:0;right:0;bottom:92px;text-align:center;font:600 32px 'Bricolage Grotesque'">Private swaps. Shielded balances. <span class="it">The first private launchpad.</span></div><div class="ft" style="position:absolute;left:0;right:0;bottom:44px;text-align:center"><b>${TICK}</b> · Solana</div>` + END],
   'vanta-g01-keyart': [W, H, () => HEAD(W, H) + WORD('VANTA', 620, 90) + VOID(360, 620, 190) + `<div style="position:absolute;left:0;right:0;top:668px;text-align:center;font:400 62px 'Instrument Serif';font-style:italic;color:#e6e6e6">Nothing reflects.</div>` + FOOT() + END],

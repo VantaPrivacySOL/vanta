@@ -16,7 +16,7 @@ a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit;c
 /* nav: a wordmark and four words */
 header.top{position:fixed;inset:0 0 auto 0;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:16px max(16px,calc((100vw - 1240px)/2));color:#fff;background:linear-gradient(rgba(5,5,5,.82),rgba(5,5,5,0));backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 header.top .mark{display:flex;align-items:center;gap:10px;font:800 17px var(--disp);letter-spacing:.14em}
-header.top .mark i{width:15px;height:15px;border-radius:50%;background:#000;box-shadow:0 0 0 2px var(--vio),0 0 14px 2px rgba(255,255,255,0.336);display:block}
+header.top .mark i{width:26px;height:26px;background:url(/favicon.svg) center/contain no-repeat;display:block;filter:drop-shadow(0 0 8px rgba(255,255,255,.3))}
 header.top nav{display:flex;gap:26px;align-items:center}
 header.top nav a{font:400 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;opacity:.62;transition:opacity .2s}
 header.top nav a:hover,header.top nav a.on{opacity:1}header.top nav a.on{text-decoration:underline;text-underline-offset:6px}

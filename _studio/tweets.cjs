@@ -7,11 +7,13 @@ const BIO = 'Private swaps. Shielded SOL. The first private launchpad. No wallet
 const DEX = 'VANTA is a privacy terminal on Solana with three products. Swap: cross-chain swaps over NEAR Intents across 39 chains, with a live quote, a one-time deposit address and no wallet connection. Pool: shielded SOL balances held under a key made in your browser, with free instant sends between accounts that never touch a chain and withdrawals that leave after a random wait. Launchpad: tokens launch and trade from shielded balances on a bonding curve, so there is no deployer wallet and no buyer list, and every launch can open sealed so all early orders fill at one price. $VANTA is the token of the protocol.';
 // [title, media, text]. Market caps: CoinGecko, 18 Nov 2026.
 const T = [
-  ['Pinned (video)', 'vanta-hype-12s.mp4', `Your wallet is a glass box. Everyone you ever paid can read all of it.
+  ['Pinned (video)', 'vanta-hype-12s.mp4', `VANTA is a private swap and a private launchpad on Solana.
 
-VANTA turns the lights off.
+Private swap: 39 chains, no wallet connection.
 
-Swap unseen. Hold unseen. Launch unseen.${L}
+Private launchpad: no deployer wallet, no buyer list.
+
+What you do with your money is nobody's business.${L}
 
 $VANTA`],
   ['Key art', 'vanta-g01-keyart.png', `VANTA.

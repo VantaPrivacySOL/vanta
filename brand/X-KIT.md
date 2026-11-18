@@ -21,13 +21,15 @@ VANTA is a privacy terminal on Solana with three products. Swap: cross-chain swa
 
 ## Tweets
 
-1. Pinned (video) · `vanta-hype-12s.mp4` · 149 chars
+1. Pinned (video) · `vanta-hype-12s.mp4` · 220 chars
 ```
-Your wallet is a glass box. Everyone you ever paid can read all of it.
+VANTA is a private swap and a private launchpad on Solana.
 
-VANTA turns the lights off.
+Private swap: 39 chains, no wallet connection.
 
-Swap unseen. Hold unseen. Launch unseen.
+Private launchpad: no deployer wallet, no buyer list.
+
+What you do with your money is nobody's business.
 
 $VANTA
 ```

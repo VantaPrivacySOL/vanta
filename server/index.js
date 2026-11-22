@@ -50,8 +50,12 @@ async function api(req, res, url) {
   return json(res, 404, { error: 'Not found' });
 }
 
+// one bad request or a failed timer must never take the site down: log it and keep serving
+process.on('uncaughtException', (e) => { console.error('uncaught', e?.stack || e); if (e?.code === 'EADDRINUSE' || e?.code === 'EACCES') process.exit(1); });
+process.on('unhandledRejection', (e) => console.error('unhandled', e?.stack || e));
+
 http.createServer(async (req, res) => {
-  const url = new URL(req.url, 'http://x');
+  let url; try { url = new URL(req.url, 'http://x'); } catch { res.writeHead(400); return res.end('bad request'); }
   try {
     if (url.pathname.startsWith('/api/')) return await api(req, res, url);
     if (url.pathname === '/health') return json(res, 200, { ok: true });
@@ -60,5 +64,5 @@ http.createServer(async (req, res) => {
     const ext = path.extname(fp), type = TYPES[ext] || 'application/octet-stream';
     if (ext === '.html' || ext === '.js') { const origin = SITE_URL || (req.headers['x-forwarded-proto'] || 'http') + '://' + req.headers.host; res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' }); return res.end(fs.readFileSync(fp, 'utf8').replaceAll('{{SITE_URL}}', origin).replaceAll('{{X_URL}}', X_URL).replaceAll('{{GH_URL}}', GH_URL).replaceAll('{{TOKEN_MINT}}', TOKEN_MINT)); }
     res.writeHead(200, { 'content-type': type, 'cache-control': ext === '.css' ? 'no-cache' : 'public, max-age=3600' }); fs.createReadStream(fp).pipe(res);
-  } catch (e) { json(res, e.code >= 400 && e.code < 600 ? e.code : 500, { error: e.code ? e.message : 'Something went wrong on our side' }); if (!e.code) console.error(e); }
+  } catch (e) { try { if (res.headersSent) res.end(); else json(res, e.code >= 400 && e.code < 600 ? e.code : 500, { error: e.code ? e.message : 'Something went wrong on our side' }); } catch {} if (!e.code) console.error(e); }
 }).listen(PORT, () => console.log(`VANTA on http://localhost:${PORT}  pool ${TREASURY || 'closed'}${pool ? ' (pays withdrawals itself)' : ''}`));

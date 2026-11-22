@@ -1,0 +1,9 @@
+node_modules
+.git
+_studio
+brand
+test
+*.json.tmp
+vanta.json
+vanta.dev.json
+.env

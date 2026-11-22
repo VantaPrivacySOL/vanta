@@ -2,6 +2,8 @@
 
 Private swaps, shielded SOL balances and a private launchpad on Solana. One Node.js process, no dependencies.
 
+[Website](https://vantanetwork.xyz) · [Docs](https://vantanetwork.xyz/docs) · [X](https://x.com/VantaPrivacy)
+
 - **Swap.** A terminal on NEAR Intents 1Click: live quote, a one-time deposit address, tracking. No wallet connection and no account.
 - **Pool.** Shielded SOL balances. An account is an ed25519 key made in the browser; every request is signed with it. Deposits are read from Solana and credited once; sends between accounts never touch a chain; withdrawals leave after a random wait.
 - **Launchpad.** Tokens launch and trade from shielded balances on a constant-product curve. Sealed openings collect orders and fill them together at one price. The tape shows amounts, never accounts.
@@ -41,6 +43,18 @@ Node 22 or newer.
 | `client/` | Home, swap, pool, launch and docs pages |
 | `test/run.js` | The test suite |
 
+## Deploy
+
+Any host that runs a container or Node 22+ works. A `Dockerfile` is included: it listens on `PORT` (8080 in the image). Mount a persistent disk and point `DATA_PATH` at it so the ledger survives restarts.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Changes are tracked in [CHANGELOG.md](CHANGELOG.md).
+
+## Security
+
+Report vulnerabilities privately: see [SECURITY.md](SECURITY.md).
+
 ## License
 
-MIT
+[MIT](LICENSE)
